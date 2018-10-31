@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Implementation-Title: SpringBootGateway
+Implementation-Version: 1.0.0
+Built-By: m.dilella
+Implementation-Vendor-Id: it.springboot.ocp.sample
+Build-Jdk: 1.8.0_131
+Implementation-URL: https://projects.spring.io/spring-boot/#/spring-bo
+ ot-starter-parent/SpringBootGateway
+Created-By: Maven Integration for Eclipse
+
