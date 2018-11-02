@@ -22,18 +22,18 @@ public class GatewayController {
 
 	private static final String urlTemplate = "http://%s/hello?message={message}";
 	private static final String SERVICES_FILE = "hello.services.file";
-
-	private Map<String, String> services;
+	private static final String SERVICE_URL_TEMPLATE = "hello.service.url.template";
+	private static final String SERVICE_PLACEHOLDER = "{service}";
 
 	private Properties props;
 
 	public GatewayController() throws IOException {
-		props = new Properties();
-		reloadServices();
 	}
 
-	private void reloadServices() throws IOException {
-		String filename = System.getenv().get(SERVICES_FILE);
+	private void reloadServices(String filename) throws IOException {
+		if (props == null) {
+			props = new Properties();
+		}
 		FileReader fr = new FileReader(filename);
 		props.load(fr);
 		fr.close();
@@ -42,10 +42,8 @@ public class GatewayController {
 	@RequestMapping(path = "/call", method = RequestMethod.POST)
 	public ServiceResp call(@RequestBody ServiceReq req) throws IOException {
 
-		reloadServices();
-
 		String name = req.getName();
-		String serviceName = props.getProperty(name.toLowerCase());
+		String serviceName = getServiceName(name);
 		if (StringUtils.isEmpty(serviceName)) {
 			ServiceResp negResp = new ServiceResp();
 			negResp.setServiceName("");
@@ -55,9 +53,35 @@ public class GatewayController {
 		RestTemplate restTemplate = new RestTemplate();
 		Map<String, String> paramMap = new HashMap<String, String>();
 		paramMap.put("message", req.getMessage());
-		ServiceResp resp = restTemplate.getForObject(String.format(urlTemplate, serviceName), ServiceResp.class, paramMap);
+
+		ServiceResp resp = null;
+		try {
+			resp = restTemplate.getForObject(String.format(urlTemplate, serviceName), ServiceResp.class, paramMap);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+
 		logger.info(resp.toString());
 
 		return resp;
+	}
+
+	private String getServiceName(String name) throws IOException {
+		String filename = System.getenv().get(SERVICES_FILE);
+		String urlTemplate = System.getenv().get(SERVICE_URL_TEMPLATE);
+
+		String serviceName = null;
+
+		if (filename != null) {
+			reloadServices(filename);
+			serviceName = props.getProperty(name.toLowerCase());
+		} if (urlTemplate != null) {
+			serviceName = urlTemplate.replace(SERVICE_PLACEHOLDER, name.toLowerCase());
+		} else {
+			throw new RuntimeException("You must specify one of hello.services.file or hello.service.url.template");
+		}
+
+		return serviceName;
 	}
 }
