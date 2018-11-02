@@ -62,7 +62,7 @@ public class GatewayController {
 			ServiceResp negResp = new ServiceResp();
 			negResp.setServiceName("");
 			negResp.setMessage("No service available with name '" + name + "'");
-			return resp;
+			return negResp;
 		}
 
 		logger.info(resp.toString());
